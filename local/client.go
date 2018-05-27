@@ -1,4 +1,4 @@
-package natureremocloud
+package natureremolocal
 
 import (
 	"fmt"
@@ -8,31 +8,28 @@ import (
 )
 
 const (
-	defaultBaseURL    = "https://api.nature.global/"
-	defaultAPIVersion = 1
 	defaultUserAgent  = "go-nature-remo"
 	apiRequestTimeout = 30 * time.Second
 )
 
 type Client struct {
-	BaseURL     *url.URL
-	APIVersion  int32
-	AccessToken string
-	HTTPClient  *http.Client
+	BaseURL    *url.URL
+	UserAgent  string
+	HTTPClient *http.Client
 }
 
-func NewClient(token string) *Client {
-	u, _ := url.Parse(defaultBaseURL)
+func NewClient(baseURL string) *Client {
+	u, _ := url.Parse(baseURL)
 	return &Client{
-		BaseURL:     u,
-		APIVersion:  defaultAPIVersion,
-		AccessToken: token,
-		HTTPClient:  &http.Client{},
+		BaseURL:    u,
+		UserAgent:  defaultUserAgent,
+		HTTPClient: &http.Client{},
 	}
 }
 
 func (c *Client) Request(req *http.Request) (resp *http.Response, err error) {
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.AccessToken))
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("User-Agent", c.UserAgent)
 
 	client := c.HTTPClient
 	client.Timeout = apiRequestTimeout
@@ -53,7 +50,7 @@ func (c *Client) urlFor(endpoint string) *url.URL {
 		panic("invalid url passed")
 	}
 
-	newURL.Path = fmt.Sprintf("/%d%s", c.APIVersion, endpoint)
+	newURL.Path = endpoint
 
 	return newURL
 }
