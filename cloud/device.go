@@ -17,18 +17,14 @@ type Device struct {
 }
 
 type NewestEvents struct {
-	Temperature Temperature `json:"te"`
-	Humidity    Humidity    `json:"hu"`
+	Temperature SensorValue `json:"te"`
+	Humidity    SensorValue `json:"hu"`
+	Illuminance SensorValue `json:"il"`
 }
 
-type Temperature struct {
+type SensorValue struct {
 	Value     float64 `json:"val"`
 	CreatedAt string  `json:"created_at"`
-}
-
-type Humidity struct {
-	Value     int32  `json:"val"`
-	CreatedAt string `json:"created_at"`
 }
 
 func (c *Client) GetDevices() ([]*Device, error) {
