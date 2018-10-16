@@ -1,4 +1,4 @@
-DEP ?= dep
+DEP ?= $(GOPATH)/bin/dep
 
 deps:
 	$(DEP) ensure -vendor-only

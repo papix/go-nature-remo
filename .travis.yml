@@ -3,5 +3,9 @@ go:
 - 1.8.x
 - 1.9.x
 - 1.10.x
+before_install:
+  - go get github.com/golang/dep/...
+install:
+  - make deps
 script:
   - make test
