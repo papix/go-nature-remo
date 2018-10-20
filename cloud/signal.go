@@ -32,3 +32,18 @@ func (c *Client) GetSignals(applianceID string) ([]*Signal, error) {
 
 	return signals, nil
 }
+
+func (c *Client) SendSignal(signalID string) ([]*Signal, error) {
+	req, err := http.NewRequest("POST", c.urlFor("/signals/"+signalID+"/send").String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.Request(req)
+	defer closeResponse(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -105,6 +106,30 @@ var signalHandler = http.HandlerFunc(func(res http.ResponseWriter, req *http.Req
 	io.WriteString(res, signalResponseBody[applianceID])
 })
 
+var sendSignalHandler = http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+	if req.Header.Get("Authorization") != "Bearer dummy-token" {
+		fmt.Fprintln(res, "Authorization header should contains passed API token")
+	}
+
+	splitPath := strings.Split(req.URL.Path, "/")
+	if splitPath[2] != "signals" || splitPath[4] != "send" {
+		fmt.Fprintf(res, "Request path '%s' is invalid", req.URL.Path)
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	re := regexp.MustCompile("signal[0-3]")
+	errorResponse := `{
+  "code": 404001,
+  "message": "Not Found"
+}`
+	if re.MatchString(splitPath[3]) {
+		io.WriteString(res, "{}")
+	} else {
+		http.Error(res, errorResponse, http.StatusNotFound)
+	}
+
+})
+
 func TestGetSignals(t *testing.T) {
 	ts := httptest.NewServer(signalHandler)
 	client := NewClientWithOption("dummy-token", ts.URL)
@@ -199,6 +224,30 @@ func TestGetSignals(t *testing.T) {
 
 		if diff := cmp.Diff(res, test.expect); diff != "" {
 			t.Errorf("GetSignals result ['%s'] differs:\n%s", res, diff)
+		}
+	}
+}
+
+func TestSendSignal(t *testing.T) {
+	ts := httptest.NewServer(signalHandler)
+	client := NewClientWithOption("dummy-token", ts.URL)
+	defer ts.Close()
+
+	var tests = []struct {
+		signalID string
+		expect   bool
+	}{
+		{"signal1", true},
+		{"signal2", true},
+		{"signal3", true},
+		{"signal4", false},
+		{"dummy-signal", false},
+	}
+
+	for _, test := range tests {
+		_, err := client.SendSignal(test.signalID)
+		if err != nil && test.expect {
+			t.Errorf("SendSignal() has ended with error '%s'", err)
 		}
 	}
 }
